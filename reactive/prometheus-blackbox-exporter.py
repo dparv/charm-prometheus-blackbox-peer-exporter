@@ -38,9 +38,9 @@ def get_modules():
         return None
 
     if 'modules' in modules:
-        return modules['modules']
+        return yaml.safe_dump(modules['modules'], default_flow_style=False)
     else:
-        return modules
+        return yaml.safe_dump(modules, default_flow_style=False)
 
 
 @when('blackbox-exporter.installed')
