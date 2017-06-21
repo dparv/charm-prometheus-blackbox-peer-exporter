@@ -1,0 +1,21 @@
+options:
+  snap_channel:
+    default: "stable"
+    type: string
+    description: |
+        If install_method is set to "snap" this option controlls channel name.
+        Supported values are: "stable", "candidate", "beta" and "edge"
+  modules:
+    default: |
+      http_2xx:
+        prober: http
+        timeout: 10s
+      tcp_connect:
+        prober: tcp
+        timeout: 10s
+      icmp:
+        prober: icmp
+        timeout: 10s
+    type: string
+    description: |
+        Blackbox exporter configuratin in raw YAML format
