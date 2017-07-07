@@ -6,6 +6,8 @@ description: |
        endpoints over HTTP, HTTPS, DNS, TCP and ICMP.
 tags:
   - monitoring
+series:
+  - xenial
 subordinate: false
 provides:
   blackbox-exporter:
