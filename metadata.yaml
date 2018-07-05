@@ -8,6 +8,7 @@ tags:
   - monitoring
 series:
   - xenial
+  - bionic
 subordinate: false
 provides:
   blackbox-exporter:
