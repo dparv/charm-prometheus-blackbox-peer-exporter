@@ -1,4 +1,4 @@
-includes: ['layer:basic', 'interface:http', 'layer:snap']
+includes: ['layer:basic', 'interface:http', 'interface:peer-discovery']
 repo: 'https://git.launchpad.net/prometheus-blackbox-exporter-charm'
 ignore: ['.*.swp' ]
 options:

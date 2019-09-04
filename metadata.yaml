@@ -7,9 +7,15 @@ description: |
 tags:
   - monitoring
 series:
-  - xenial
   - bionic
-subordinate: false
+subordinate: true
 provides:
   blackbox-exporter:
     interface: http
+requires:
+  juju-info:
+    interface: juju-info
+    scope: container
+peers:
+  blackbox-peer:
+    interface: peer-discovery

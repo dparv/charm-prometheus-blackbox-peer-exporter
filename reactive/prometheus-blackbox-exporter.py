@@ -1,3 +1,4 @@
+import subprocess
 import yaml
 
 from charmhelpers.core import host, hookenv
@@ -6,14 +7,18 @@ from charms.reactive import (
     when, when_not, set_state, remove_state
 )
 from charms.reactive.helpers import any_file_changed, data_changed
-from charms.layer import snap
+from charms.reactive import hook
 
+from charmhelpers.fetch import apt_install
 
-SNAP_NAME = 'prometheus-blackbox-exporter'
-SVC_NAME = 'snap.prometheus-blackbox-exporter.daemon'
+hooks = hookenv.Hooks()
+
+APT_PKG_NAME = 'prometheus-blackbox-exporter'
+SVC_NAME = 'prometheus-blackbox-exporter'
+EXECUTABLE = '/usr/bin/prometheus-blackbox-exporter'
 PORT_DEF = 9115
 BLACKBOX_EXPORTER_YML_TMPL = 'blackbox.yaml.j2'
-CONF_FILE_PATH = '/var/snap/prometheus-blackbox-exporter/current/blackbox.yml'
+CONF_FILE_PATH = '/etc/prometheus/blackbox.yml'
 
 
 def templates_changed(tmpl_list):
@@ -24,8 +29,9 @@ def templates_changed(tmpl_list):
 def install_packages():
     hookenv.status_set('maintenance', 'Installing software')
     config = hookenv.config()
-    channel = config.get('snap_channel', 'stable')
-    snap.install(SNAP_NAME, channel=channel, force_dangerous=False)
+    apt_install(APT_PKG_NAME, fatal=True)
+    cmd = ["sudo", "setcap", "cap_net_raw+ep", EXECUTABLE]
+    subprocess.check_output(cmd)
     set_state('blackbox-exporter.installed')
     set_state('blackbox-exporter.do-check-reconfig')
 
@@ -88,7 +94,27 @@ def restart_blackbox_exporter():
 
 
 # Relations
-@when('blackbox-exporter.started')
-@when('blackbox-exporter.available') # Relation name is "blackbox-exporter"
-def configure_blackbox_exporter_relation(target):
-    target.configure(PORT_DEF)
+#@when('blackbox-exporter.started')
+#@when('blackbox-peer.connected','blackbox-peer.joined','blackbox-peer.departed')
+@hook('blackbox-peer-relation-{joined,changed}','blackbox-exporter-relation-{joined,changed}')
+def configure_blackbox_exporter_relation(peers):
+    targets = []
+    for rid in hookenv.relation_ids('blackbox-peer'):
+        for unit in hookenv.related_units(rid):
+            addr = hookenv.relation_get('private-address', rid=rid, unit=unit)
+            targets.append(addr)
+
+    relation_settings = {}
+    relation_settings['targets'] = targets
+    relation_settings['ip_address'] = hookenv.unit_get('private-address')
+    relation_settings['port'] = PORT_DEF
+    relation_settings['job_name'] = hookenv.principal_unit()
+    relation_settings['module'] = get_module()
+
+    for rel_id in hookenv.relation_ids('blackbox-exporter'):
+        hookenv.relation_set(relation_id=rel_id, relation_settings=relation_settings)
+
+def get_module():
+    # TODO(dparv): rewrite to query the principal service and provide
+    # reasonable modules to probe - http/https/ssl certs/ssh/icmp/etc.
+    return 'icmp'

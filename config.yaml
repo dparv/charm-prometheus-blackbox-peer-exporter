@@ -16,6 +16,8 @@ options:
       icmp:
         prober: icmp
         timeout: 10s
+        icmp:
+          preferred_ip_protocol: "ip4"
     type: string
     description: |
         Blackbox exporter configuratin in raw YAML format
