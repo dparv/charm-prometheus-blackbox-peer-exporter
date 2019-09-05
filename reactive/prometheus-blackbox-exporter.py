@@ -98,11 +98,14 @@ def restart_blackbox_exporter():
 #@when('blackbox-peer.connected','blackbox-peer.joined','blackbox-peer.departed')
 @hook('blackbox-peer-relation-{joined,changed}','blackbox-exporter-relation-{joined,changed}')
 def configure_blackbox_exporter_relation(peers):
+    config = hookenv.config()
+
     targets = []
     for rid in hookenv.relation_ids('blackbox-peer'):
         for unit in hookenv.related_units(rid):
             addr = hookenv.relation_get('private-address', rid=rid, unit=unit)
-            targets.append(addr)
+            principal_unit = hookenv.relation_get('principal-unit', rid=rid, unit=unit)
+            targets.append({'ip-address': addr, 'principal-unit': principal_unit})
 
     relation_settings = {}
     relation_settings['targets'] = targets
@@ -110,6 +113,7 @@ def configure_blackbox_exporter_relation(peers):
     relation_settings['port'] = PORT_DEF
     relation_settings['job_name'] = hookenv.principal_unit()
     relation_settings['module'] = get_module()
+    relation_settings['scrape_interval'] = config.get('scrape-interval')
 
     for rel_id in hookenv.relation_ids('blackbox-exporter'):
         hookenv.relation_set(relation_id=rel_id, relation_settings=relation_settings)
@@ -118,3 +122,14 @@ def get_module():
     # TODO(dparv): rewrite to query the principal service and provide
     # reasonable modules to probe - http/https/ssl certs/ssh/icmp/etc.
     return 'icmp'
+
+@when('blackbox-peer.connected')
+def setup_blackbox_peer_relation(peers):
+    # Set first blackbox-peer relations
+    for rid in hookenv.relation_ids('blackbox-peer'):
+        relation_settings = hookenv.relation_get(rid=rid, unit=hookenv.local_unit())
+        # XXX: add unit private address, as this rewrites the rel data
+        relation_settings['principal-unit'] = hookenv.principal_unit()
+        relation_settings['private-address'] = hookenv.unit_get('private-address')
+        hookenv.relation_set(relation_id=rid, relation_settings=relation_settings)
+
