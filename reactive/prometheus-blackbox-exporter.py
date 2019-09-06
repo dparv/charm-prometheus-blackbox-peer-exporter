@@ -94,8 +94,6 @@ def restart_blackbox_exporter():
 
 
 # Relations
-#@when('blackbox-exporter.started')
-#@when('blackbox-peer.connected','blackbox-peer.joined','blackbox-peer.departed')
 @hook('blackbox-peer-relation-{joined,changed}','blackbox-exporter-relation-{joined,changed}')
 def configure_blackbox_exporter_relation(peers):
     config = hookenv.config()
@@ -125,10 +123,9 @@ def get_module():
 
 @when('blackbox-peer.connected')
 def setup_blackbox_peer_relation(peers):
-    # Set first blackbox-peer relations
+    # Set blackbox-peer relations
     for rid in hookenv.relation_ids('blackbox-peer'):
         relation_settings = hookenv.relation_get(rid=rid, unit=hookenv.local_unit())
-        # XXX: add unit private address, as this rewrites the rel data
         relation_settings['principal-unit'] = hookenv.principal_unit()
         relation_settings['private-address'] = hookenv.unit_get('private-address')
         hookenv.relation_set(relation_id=rid, relation_settings=relation_settings)
