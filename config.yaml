@@ -18,6 +18,7 @@ options:
         timeout: 10s
         icmp:
           preferred_ip_protocol: "ip4"
+          payload_size: 1472
     type: string
     description: |
         Blackbox exporter configuratin in raw YAML format
