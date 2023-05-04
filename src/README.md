@@ -2,17 +2,21 @@
 
 This charm provides the [Prometheus Blackbox exporter](https://github.com/prometheus/blackbox_exporter), part of the [Prometheus](https://prometheus.io/) monitoring system
 
-The charm should be related to the prometheus charm
+This charm is a subordinate option of the https://github.com/dparv/charm-prometheus-blackbox-peer-exporter and creates peer relation data between units related to.
 
-## Configuration
+Then this data can be exported using an action and added as a scrape-jobs option to a prometheus instance to provide monitoring mesh capabilities.
 
-To configure the blackbox exporter `modules` use the charm's `modules` config option.
+# How-to
 
-As an example, if you store your exporter config in a local file called `modules.yaml`
-you can update the charm's configuration using:
+juju deploy prometheus-blackbox-peer-exporter.charm
 
-    juju config prometheus-blackbox-exporter modules=@modules.yaml
+Wait until charm settles, all relation data to be populated, it takes some time.
 
-To confirm configuration was set:
+juju run-action --wait prometheus-blackbox-peer-exporter/leader dump-prometheus-jobs > scrape-jobs.yaml
 
-    juju config prometheus-blackbox-exporter
+Edit the scrape-jobs to cleanup the headers/footers and make sure to ident the
+yaml starting from the first line of the file (e.g. cut first 6 columns).
+
+juju config prometheus scrape-jobs=@scrape-jobs.yaml
+
+You can then import the provided grafana template to visualize the monitoring mesh.
