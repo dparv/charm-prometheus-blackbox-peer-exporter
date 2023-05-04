@@ -4,7 +4,6 @@ import yaml
 import json
 import ast
 from charmhelpers.core import hookenv
-import ipaddress
 
 def dump_config():
     print('Done')
@@ -26,19 +25,18 @@ def dump_config():
                     continue
                 target_unit_networks = ast.literal_eval(rel_unit_data['unit-networks'])
                 for target_network in target_unit_networks:
-                    if ipaddress.ip_address(rdata['private-address']) in ipaddress.ip_network(target_network['net']):
-                        job['static_configs'].append({
-                            'targets': [rel_unit_data['private-address']],
-                            'labels': {
-                                'interface': target_network['iface'],
-                                'source': rdata['principal-unit'],
-                                'source_hostname': rdata['principal-hostname'],
-                                'source_ip': rdata['private-address'],
-                                'destination': rel_unit_data['private-address'],
-                                'destination_hostname': rel_unit_data['principal-hostname'],
-                                'probe': 'icmp'
-                            }
-                        })
+                    job['static_configs'].append({
+                        'targets': [rel_unit_data['private-address']],
+                        'labels': {
+                            'interface': target_network['iface'],
+                            'source': rdata['principal-unit'],
+                            'source_hostname': rdata['principal-hostname'],
+                            'source_ip': rdata['private-address'],
+                            'destination': rel_unit_data['private-address'],
+                            'destination_hostname': rel_unit_data['principal-hostname'],
+                            'probe': 'icmp'
+                        }
+                    })
             job['relabel_configs'] = [
                 {'source_labels': ['__address__'], 'target_label': '__param_target'},
                 {'source_labels': ['__param_target'], 'target_label': 'instance'},
