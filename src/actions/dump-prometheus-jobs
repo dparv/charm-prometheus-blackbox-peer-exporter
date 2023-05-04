@@ -34,6 +34,8 @@ def dump_config():
                             'source_ip': rdata['private-address'],
                             'destination': rel_unit_data['private-address'],
                             'destination_hostname': rel_unit_data['principal-hostname'],
+                            'source_az': rdata['az'],
+                            'destination_az': rel_unit_data['az'],
                             'probe': 'icmp'
                         }
                     })

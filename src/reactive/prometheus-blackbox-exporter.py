@@ -1,6 +1,7 @@
 import ast
 import subprocess
 import yaml
+import os
 import socket
 import sys
 
@@ -24,6 +25,7 @@ EXECUTABLE = '/usr/bin/prometheus-blackbox-exporter'
 PORT_DEF = 9115
 BLACKBOX_EXPORTER_YML_TMPL = 'blackbox.yaml.j2'
 CONF_FILE_PATH = '/etc/prometheus/blackbox.yml'
+AZ_PATH = '/var/lib/juju/az'
 
 
 def templates_changed(tmpl_list):
@@ -97,60 +99,11 @@ def restart_blackbox_exporter():
     set_state('blackbox-exporter.started')
     remove_state('blackbox-exporter.do-restart')
 
-# Relations
-@hook('blackbox-peer-relation-{joined,departed}')
-def configure_blackbox_exporter_relation(peers):
-    hookenv.log('Running blackbox exporter relation.')
-    hookenv.status_set('maintenance', 'Configuring blackbox peer relations.')
-    config = hookenv.config()
-
-    icmp_targets = []
-    tcp_targets = []
-    networks = []
-    for rid in hookenv.relation_ids('blackbox-peer'):
-        for unit in hookenv.related_units(rid):
-            unit_ports = hookenv.relation_get('unit-ports', rid=rid, unit=unit)
-            principal_unit = hookenv.relation_get('principal-unit', rid=rid, unit=unit)
-            unit_networks = hookenv.relation_get('unit-networks', rid=rid, unit=unit)
-            if unit_networks is not None:
-                unit_networks = ast.literal_eval(unit_networks)
-                for unit_network in unit_networks:
-                    # Chcek if same network exists on this unit
-                    if unit_network['net'] in [net['net'] for net in get_unit_networks()]:
-                        networks.append(unit_network['net'])
-                        icmp_targets.append({
-                            'network': unit_network['net'],
-                            'interface': unit_network['iface'],
-                            'ip-address': unit_network['ip'],
-                            'principal-unit': principal_unit,
-                            'module': 'icmp',
-                            })
-
-            if unit_ports is not None:
-                unit_ports = ast.literal_eval(unit_ports)
-                for port in unit_ports:
-                    tcp_targets.append({
-                        'ip-address': unit_network['ip'],
-                        'port': port,
-                        'principal-unit': principal_unit,
-                        'module': 'tcp_connect',
-                        })
-
-    relation_settings = {}
-    relation_settings['icmp_targets'] = icmp_targets
-    relation_settings['tcp_targets'] = tcp_targets
-    relation_settings['networks'] = networks
-    relation_settings['ip_address'] = hookenv.unit_get('private-address')
-    relation_settings['port'] = PORT_DEF
-    relation_settings['job_name'] = hookenv.principal_unit()
-    relation_settings['hostname'] = socket.gethostname()
-    relation_settings['scrape_interval'] = config.get('scrape-interval')
-
-
-    for rel_id in hookenv.relation_ids('blackbox-exporter'):
-        hookenv.relation_set(relation_id=rel_id, relation_settings=relation_settings)
-
-    hookenv.status_set('active', 'Ready')
+def get_az():
+    az = None
+    if os.path.exists(AZ_PATH):
+        az = open(AZ_PATH, 'r').read().strip()
+    return az
 
 def get_unit_networks():
     networks = []
@@ -193,6 +146,7 @@ def setup_blackbox_peer_relation(peers):
         relation_settings['principal-hostname'] = socket.gethostname()
         relation_settings['private-address'] = hookenv.unit_get('private-address')
         relation_settings['unit-networks'] = get_unit_networks()
+        relation_settings['az'] = get_az()
         relation_settings['unit-ports'] = get_principal_unit_open_ports()
         hookenv.relation_set(relation_id=rid, relation_settings=relation_settings)
 
