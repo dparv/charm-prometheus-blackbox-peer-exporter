@@ -152,3 +152,8 @@ def setup_blackbox_peer_relation(peers):
 
     hookenv.status_set('active', 'Ready')
     remove_state('blackbox-exporter.redo-peer-relation')
+
+@hook("upgrade-charm")
+def upgrade_charm():
+    hookenv.log('Upgrading charm')
+    set_state('blackbox-exporter.redo-peer-relation')
