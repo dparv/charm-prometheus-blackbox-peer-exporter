@@ -1,0 +1,55 @@
+#!/usr/local/sbin/charm-env python3
+
+import yaml
+import json
+import ast
+from charmhelpers.core import hookenv
+import ipaddress
+
+def dump_config():
+    print('Done')
+    jobs = []
+    for rid in hookenv.relation_ids('blackbox-peer'):
+        for unit in hookenv.related_units(rid) + [hookenv.local_unit()]:
+            rdata = hookenv.relation_get(rid=rid, unit=unit)
+            unit_networks = ast.literal_eval(rdata['unit-networks'])
+            job = {}
+            job['job_name'] = rdata['principal-hostname'] + "-icmp"
+            job['metrics_path'] = '/probe'
+            job['params'] = {'module': ['icmp']}
+            job['scrape_interval'] = '60s'
+            # second loop, but need to exclude the source unit!
+            job['static_configs'] = []
+            for unit in hookenv.related_units(rid) + [hookenv.local_unit()]:
+                rel_unit_data = hookenv.relation_get(rid=rid, unit=unit)
+                if rel_unit_data == rdata:
+                    continue
+                target_unit_networks = ast.literal_eval(rel_unit_data['unit-networks'])
+                for target_network in target_unit_networks:
+                    if ipaddress.ip_address(rdata['private-address']) in ipaddress.ip_network(target_network['net']):
+                        job['static_configs'].append({
+                            'targets': [rel_unit_data['private-address']],
+                            'labels': {
+                                'interface': target_network['iface'],
+                                'source': rdata['principal-unit'],
+                                'source_hostname': rdata['principal-hostname'],
+                                'source_ip': rdata['private-address'],
+                                'destination': rel_unit_data['private-address'],
+                                'destination_hostname': rel_unit_data['principal-hostname'],
+                                'probe': 'icmp'
+                            }
+                        })
+            job['relabel_configs'] = [
+                {'source_labels': ['__address__'], 'target_label': '__param_target'},
+                {'source_labels': ['__param_target'], 'target_label': 'instance'},
+                {'target_label': '__address__', 'replacement': rdata['private-address']+':9115'}
+            ]
+            jobs.append(job)
+    print(yaml.dump(jobs))
+    return True
+
+def main():
+    dump_config()
+
+if __name__ == "__main__": 
+    main()
