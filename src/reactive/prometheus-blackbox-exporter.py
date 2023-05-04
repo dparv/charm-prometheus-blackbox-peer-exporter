@@ -1,6 +1,7 @@
 import ast
 import subprocess
 import yaml
+import socket
 import sys
 
 from charmhelpers.core import host, hookenv
@@ -142,6 +143,7 @@ def configure_blackbox_exporter_relation(peers):
     relation_settings['ip_address'] = hookenv.unit_get('private-address')
     relation_settings['port'] = PORT_DEF
     relation_settings['job_name'] = hookenv.principal_unit()
+    relation_settings['hostname'] = socket.gethostname()
     relation_settings['scrape_interval'] = config.get('scrape-interval')
 
 
@@ -188,6 +190,7 @@ def setup_blackbox_peer_relation(peers):
     for rid in hookenv.relation_ids('blackbox-peer'):
         relation_settings = hookenv.relation_get(rid=rid, unit=hookenv.local_unit())
         relation_settings['principal-unit'] = hookenv.principal_unit()
+        relation_settings['principal-hostname'] = socket.gethostname()
         relation_settings['private-address'] = hookenv.unit_get('private-address')
         relation_settings['unit-networks'] = get_unit_networks()
         relation_settings['unit-ports'] = get_principal_unit_open_ports()

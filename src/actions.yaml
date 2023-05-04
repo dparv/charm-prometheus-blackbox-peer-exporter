@@ -1,0 +1,3 @@
+dump-prometheus-jobs:
+  description: | 
+    Generates yaml file from the peer relation data for prometheus scrape jobs.

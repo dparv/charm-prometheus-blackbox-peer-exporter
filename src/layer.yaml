@@ -1,0 +1,9 @@
+includes: ['layer:basic', 'interface:http', 'interface:peer-discovery']
+repo: https://git.launchpad.net/~dparv/+git/charm-prometheus-blackbox-peer-exporter
+ignore: ['.*.swp' ]
+options:
+  basic:
+    use_venv: true
+    packages:
+      - python3-netifaces
+      - python3-yaml
