@@ -28,6 +28,12 @@ juju run-action --wait prometheus-blackbox-peer-exporter/leader dump-prometheus-
 Edit the scrape-jobs to cleanup the headers/footers and make sure to ident the
 yaml starting from the first line of the file (e.g. cut first 6 columns).
 
+```
+sed -i '1,6d' scrape-jobs.yaml
+sed -i -n -e :a -e '1,6!{P;N;D;};N;ba' scrape-jobs.yaml
+cut -c 7- scrape-jobs.yaml > scrape-jobs.tmp && mv scrape-jobs.tmp scrape-jobs.yaml
+```
+
 juju config prometheus scrape-jobs=@scrape-jobs.yaml
 
 You can then import the provided grafana template to visualize the monitoring mesh.
