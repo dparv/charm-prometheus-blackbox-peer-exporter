@@ -6,6 +6,17 @@ This charm is a subordinate option of the https://github.com/dparv/charm-prometh
 
 Then this data can be exported using an action and added as a scrape-jobs option to a prometheus instance to provide monitoring mesh capabilities.
 
+# Optionally AZ tagging
+
+```
+juju machines | grep -v "lxd\|Message" | awk '{print $1,$6}' | while read line; do # or any other filter that you might want
+    machine=$(echo $line | awk '{print $1}'); 
+    az=$(echo $line | awk '{print $2}'); 
+    echo "Adding $az to machine $machine"
+    juju run --machine $machine "sudo bash -c 'echo $az > /var/lib/juju/az'";
+done
+```
+
 # How-to
 
 juju deploy prometheus-blackbox-peer-exporter.charm
