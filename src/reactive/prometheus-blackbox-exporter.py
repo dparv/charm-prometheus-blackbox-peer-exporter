@@ -25,7 +25,6 @@ EXECUTABLE = '/usr/bin/prometheus-blackbox-exporter'
 PORT_DEF = 9115
 BLACKBOX_EXPORTER_YML_TMPL = 'blackbox.yaml.j2'
 CONF_FILE_PATH = '/etc/prometheus/blackbox.yml'
-AZ_PATH = '/var/lib/juju/az'
 
 
 def templates_changed(tmpl_list):
@@ -100,9 +99,7 @@ def restart_blackbox_exporter():
     remove_state('blackbox-exporter.do-restart')
 
 def get_az():
-    az = None
-    if os.path.exists(AZ_PATH):
-        az = open(AZ_PATH, 'r').read().strip()
+    az = os.getenv('JUJU_AVAILABILITY_ZONE') or 'None'
     return az
 
 def get_unit_networks():
