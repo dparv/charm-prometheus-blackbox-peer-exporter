@@ -6,7 +6,9 @@ This charm is a subordinate option of the https://github.com/dparv/charm-prometh
 
 Then this data can be exported using an action and added as a scrape-jobs option to a prometheus instance to provide monitoring mesh capabilities.
 
-# Optionally AZ tagging
+# Optionally AZ tagging [DEPRECATED]
+
+Revision 2, commit d8927f6 now uses the native environment varibale JUJU_AVAILABILITY_ZONE.
 
 ```
 juju machines | grep -v "lxd\|Message" | awk '{print $1,$6}' | while read line; do # or any other filter that you might want
