@@ -5,6 +5,7 @@ import os
 import socket
 import sys
 
+from charms.layer import snap
 from charmhelpers.core import host, hookenv
 from charmhelpers.core.templating import render
 from charms.reactive import (
@@ -20,6 +21,7 @@ from charmhelpers.fetch import apt_install
 hooks = hookenv.Hooks()
 
 APT_PKG_NAME = 'prometheus-blackbox-exporter'
+SNAP_NAME = "prometheus-blackbox-exporter"
 SVC_NAME = 'prometheus-blackbox-exporter'
 EXECUTABLE = '/usr/bin/prometheus-blackbox-exporter'
 PORT_DEF = 9115
@@ -30,17 +32,15 @@ CONF_FILE_PATH = '/etc/prometheus/blackbox.yml'
 def templates_changed(tmpl_list):
     return any_file_changed(['templates/{}'.format(x) for x in tmpl_list])
 
-
-@when_not('blackbox-exporter.installed')
+@when_not("blackbox-exporter.installed")
 def install_packages():
-    hookenv.status_set('maintenance', 'Installing software')
+    """Installs the snap exporter."""
+    hookenv.status_set("maintenance", "Installing software")
     config = hookenv.config()
-    apt_install(APT_PKG_NAME, fatal=True)
-    cmd = ["sudo", "setcap", "cap_net_raw+ep", EXECUTABLE]
-    subprocess.check_output(cmd)
-    set_state('blackbox-exporter.installed')
-    set_state('blackbox-exporter.do-check-reconfig')
-
+    channel = config.get("snap_channel", "stable")
+    snap.install(SNAP_NAME, channel=channel, force_dangerous=False)
+    set_state("blackbox-exporter.installed")
+    set_state("blackbox-exporter.do-check-reconfig")
 
 def get_modules():
     config = hookenv.config()
