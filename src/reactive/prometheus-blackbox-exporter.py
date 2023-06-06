@@ -26,7 +26,7 @@ SVC_NAME = 'prometheus-blackbox-exporter'
 EXECUTABLE = '/usr/bin/prometheus-blackbox-exporter'
 PORT_DEF = 9115
 BLACKBOX_EXPORTER_YML_TMPL = 'blackbox.yaml.j2'
-CONF_FILE_PATH = '/etc/prometheus/blackbox.yml'
+CONF_FILE_PATH = '/var/snap/prometheus-blackbox-exporter/current/blackbox.yml'
 
 
 def templates_changed(tmpl_list):
