@@ -39,3 +39,25 @@ cut -c 7- scrape-jobs.yaml > scrape-jobs.tmp && mv scrape-jobs.tmp scrape-jobs.y
 juju config prometheus scrape-jobs=@scrape-jobs.yaml
 
 You can then import the provided grafana template to visualize the monitoring mesh.
+
+# Adding alerting
+
+```
+juju deploy prometheus-alertmanager
+juju add-relation prometheus-alertmanager:alertmanager-service prometheus:alertmanager-service
+juju config prometheus custom-rules=@custom_rules.yaml
+```
+
+Example of custom_rules.yaml:
+```
+groups:
+- name: Blackbox Reachability Alerts
+  rules:
+  - alert: Host unreachable
+    annotations:
+      summary: "{{ $labels.source_hostname }} -> {{ $labels.destination_hostname }}"
+      description: "Ping from {{ $labels.source_hostname }} to {{ $labels.destination_hostname }} failed on interface {{ $labels.interface }}"
+    expr: |
+        probe_success{}==0
+    for: 1m
+```
